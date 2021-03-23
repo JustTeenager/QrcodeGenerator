@@ -1,22 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+
+
+
+<ScrollView
+xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    tools:context=".MainActivity">
-
-
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_height="wrap_content">
     <ImageView
         android:id="@+id/qr_code_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-    <TextView
-        android:id="@+id/uml_code_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-         />
-
+        android:layout_width="250dp"
+        android:layout_height="250dp"/>
+        <TextView
+            android:id="@+id/uml_code_text"
+            android:text="@string/qr_title"
+            android:textSize="12dp"
+            android:fontFamily="@font/txt_font"
+            android:textColor="@color/qr_code_blue"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_height="wrap_content"/>
 </LinearLayout>
+</ScrollView>
+
