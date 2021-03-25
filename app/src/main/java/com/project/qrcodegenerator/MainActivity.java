@@ -9,9 +9,12 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
+import android.util.Base64;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,6 +23,7 @@ import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -27,6 +31,8 @@ import java.io.Writer;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSION_CODE = 100;
+    private static final String SHARED_PREFS_KEY = "shared_prefs_key";
+    private static final String SHARED_PREFS_NAME = "shared_prefs_name";
     private TelephonyManager manager;
     private ImageView qrCodeView;
     private TextView qrCodeText;
@@ -62,14 +68,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void createQrCode() {
-        manager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            qrCodeView.setImageBitmap(urlToImageEncode(startUml+ manager.getImei()));
-           // qrCodeText.setText(startUml + manager.getImei());
-        }
-        else {
-            qrCodeView.setImageBitmap(urlToImageEncode(startUml+manager.getDeviceId()));
-           // qrCodeText.setText(startUml+manager.getDeviceId());
+        if (getSharedPreferences(SHARED_PREFS_NAME,MODE_PRIVATE).getString(SHARED_PREFS_KEY,null)==null) {
+            manager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                qrCodeView.setImageBitmap(urlToImageEncode(startUml + manager.getImei()));
+            } else {
+                qrCodeView.setImageBitmap(urlToImageEncode(startUml + manager.getDeviceId()));
+            }
+        } else{
+            Log.d("tut_else_qr","вошли в else");
+            byte[] bytes=Base64.decode(getSharedPreferences(SHARED_PREFS_NAME,MODE_PRIVATE).getString(SHARED_PREFS_KEY,""),Base64.DEFAULT);
+            Bitmap bitmap= BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+            qrCodeView.setImageBitmap(bitmap);
         }
     }
 
@@ -89,13 +99,28 @@ public class MainActivity extends AppCompatActivity {
 
             Bitmap bitmap = Bitmap.createBitmap(bitMatrixWidth,bitMatrixHeight, Bitmap.Config.ARGB_4444);
             bitmap.setPixels(pixels, 0, 500, 0, 0, bitMatrixWidth,bitMatrixHeight);
+            new Thread(){
+                @Override
+                public void run() {
+                    super.run();
+                    writeBitmapIntoPrefs(bitmap);
+                }
+            }.start();
             return bitmap;
         } catch (WriterException e) {
             setDebuggableText(e);
-            e.printStackTrace();
             return null;
         }
 
+    }
+
+    private void writeBitmapIntoPrefs(Bitmap bitmap) {
+        Log.d("tut_to_prefs",bitmap.toString());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos); //bm is the bitmap object
+        byte[] b = baos.toByteArray();
+        String encoded = Base64.encodeToString(b, Base64.DEFAULT);
+        getSharedPreferences(SHARED_PREFS_NAME,MODE_PRIVATE).edit().putString(SHARED_PREFS_KEY,encoded).apply();
     }
 
     private void setDebuggableText(Exception e){
